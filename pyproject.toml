@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "fastapi-template"
+name = "file-manager"
 version = "0.1.0"
-description = "A template for kickstarting new FastAPI projects"
-authors = ["zhanymkanov"]
+description = "File manager project"
+authors = ["abdukulov"]
 readme = "README.md"
 license = "UNLICENSED"
 
