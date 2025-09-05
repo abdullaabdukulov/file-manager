@@ -33,6 +33,12 @@ class Config(CustomBaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_S3_ENDPOINT_URL: str
+    AWS_S3_BUCKET_NAME: str
+    REDIS_URL: str
+
     @model_validator(mode="after")
     def validate_sentry_non_local(self) -> "Config":
         if self.ENVIRONMENT.is_deployed and not self.SENTRY_DSN:
@@ -43,7 +49,7 @@ class Config(CustomBaseSettings):
 
 settings = Config()
 
-app_configs: dict[str, Any] = {"title": "App API"}
+app_configs: dict[str, Any] = {"title": "File Manager API"}
 if settings.ENVIRONMENT.is_deployed:
     app_configs["root_path"] = f"/v{settings.APP_VERSION}"
 

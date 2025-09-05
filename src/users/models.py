@@ -29,3 +29,5 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     department = relationship("Department", back_populates="users")
+
+    files = relationship("File", back_populates="owner")

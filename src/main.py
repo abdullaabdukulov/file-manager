@@ -5,9 +5,10 @@ import sentry_sdk
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from src.auth.router import router as auth_router
 from src.config import app_configs, settings
+from src.auth.router import router as auth_router
 from src.users.router import router as users_router
+from src.files.router import router as files_router
 
 
 @asynccontextmanager
@@ -37,6 +38,7 @@ if settings.ENVIRONMENT.is_deployed:
 
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(users_router, prefix="/api/v1")
+app.include_router(files_router, prefix="/api/v1")
 
 
 @app.get("/healthcheck", include_in_schema=False)
