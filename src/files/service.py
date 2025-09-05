@@ -1,4 +1,5 @@
 import logging
+import uuid
 from fastapi import UploadFile
 from sqlalchemy import select, update
 from uuid import UUID
@@ -13,7 +14,6 @@ from src.files.utils import get_file_type
 from src.users.constants import Role
 
 logger = logging.getLogger(__name__)
-
 
 async def validate_file_upload(file: UploadFile, visibility: Visibility, current_user: dict) -> tuple[str, FileType]:
     """Validate file size, type, and visibility based on user role."""
@@ -34,14 +34,11 @@ async def validate_file_upload(file: UploadFile, visibility: Visibility, current
 
     return file.filename, file_type
 
-
 async def upload_file(file: UploadFile, visibility: Visibility, current_user: dict) -> dict:
     """Upload a file to S3, save metadata, and trigger metadata extraction."""
     filename, file_type = await validate_file_upload(file, visibility, current_user)
-    s3_key = f"files/{current_user['id']}/{UUID().hex}/{filename}"
-    file_content = b""
-    async for chunk in file.stream():  # Stream in chunks
-        file_content += chunk
+    s3_key = f"files/{current_user['id']}/{uuid.uuid4().hex}/{filename}"
+    file_content = await file.read()  # Read the entire file content
     await upload_to_s3(file_content, s3_key)
 
     file_data = {
@@ -61,7 +58,6 @@ async def upload_file(file: UploadFile, visibility: Visibility, current_user: di
     extract_metadata.delay(str(file_record["id"]), s3_key, file_type.value)
     return file_record
 
-
 async def get_file(file_id: UUID, current_user: dict) -> dict:
     """Get file details with access checks."""
     file = await fetch_one(select(File).where(File.id == file_id))
@@ -73,7 +69,6 @@ async def get_file(file_id: UUID, current_user: dict) -> dict:
         file["file_metadata"] = file_metadata if file_metadata else {}
         return file
     raise FileAccessDenied()
-
 
 async def download_file(file_id: UUID, current_user: dict) -> tuple[bytes, str]:
     """Download a file from S3 with access checks."""
@@ -91,7 +86,6 @@ async def download_file(file_id: UUID, current_user: dict) -> tuple[bytes, str]:
         return file_content, file["filename"]
     raise FileAccessDenied()
 
-
 async def delete_file(file_id: UUID, current_user: dict) -> None:
     """Delete a file from S3 and database with access checks."""
     file = await fetch_one(select(File).where(File.id == file_id))
@@ -99,16 +93,15 @@ async def delete_file(file_id: UUID, current_user: dict) -> None:
         raise FileNotFound()
 
     role = Role(current_user["role"])
-    if role == Role.USER and file["owner_id"] != UUID(current_user["id"]):
+    if role == Role.USER and file["owner_id"] != current_user["id"]:
         raise FileAccessDenied(detail="Users can only delete their own files")
-    if role == Role.MANAGER and file["department_id"] != UUID(current_user["department_id"]):
+    if role == Role.MANAGER and file["department_id"] != current_user["department_id"]:
         raise FileAccessDenied(detail="Managers can only delete files in their department")
 
     await delete_from_s3(file["s3_key"])
     await execute(File.__table__.delete().where(File.id == file_id), commit_after=True)
     await execute(FileMetadata.__table__.delete().where(FileMetadata.file_id == file_id), commit_after=True)
     logger.info(f"File deleted: {file_id}")
-
 
 async def list_files(department_id: UUID | None, current_user: dict) -> list[dict]:
     """List files accessible to the user."""
@@ -121,7 +114,7 @@ async def list_files(department_id: UUID | None, current_user: dict) -> list[dic
     elif role == Role.MANAGER:
         query = query.where(
             (File.visibility == Visibility.PUBLIC) |
-            (File.department_id == UUID(current_user["department_id"])) |
+            (File.department_id == current_user["department_id"]) |
             (File.visibility == Visibility.DEPARTMENT)
         )
         if department_id:
@@ -129,10 +122,10 @@ async def list_files(department_id: UUID | None, current_user: dict) -> list[dic
     else:  # USER
         query = query.where(
             (File.visibility == Visibility.PUBLIC) |
-            (File.department_id == UUID(current_user["department_id"]) & File.visibility == Visibility.DEPARTMENT) |
-            (File.owner_id == UUID(current_user["id"]))
+            (File.department_id == current_user["department_id"] & File.visibility == Visibility.DEPARTMENT) |
+            (File.owner_id == current_user["id"])
         )
-        if department_id and department_id != UUID(current_user["department_id"]):
+        if department_id and department_id != current_user["department_id"]:
             raise FileAccessDenied(detail="Users cannot access other departments")
 
     files = await fetch_all(query)
@@ -142,7 +135,6 @@ async def list_files(department_id: UUID | None, current_user: dict) -> list[dic
     logger.info(f"Listed {len(files)} files for user {current_user['id']}")
     return files
 
-
 async def can_access_file(file: dict, current_user: dict) -> bool:
     """Check if a user can access a file based on visibility and role."""
     role = Role(current_user["role"])
@@ -151,7 +143,7 @@ async def can_access_file(file: dict, current_user: dict) -> bool:
     if file["visibility"] == Visibility.PUBLIC:
         return True
     if file["visibility"] == Visibility.DEPARTMENT:
-        return role == Role.MANAGER or file["department_id"] == UUID(current_user["department_id"])
+        return role == Role.MANAGER or file["department_id"] == current_user["department_id"]
     if file["visibility"] == Visibility.PRIVATE:
-        return file["owner_id"] == UUID(current_user["id"])
+        return file["owner_id"] == current_user["id"]  # Direct UUID comparison
     return False

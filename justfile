@@ -4,6 +4,9 @@ default:
 seed:
   poetry run python scripts/seed.py
 
+celery:
+    poetry run celery -A src.tasks worker --loglevel=info
+
 run *args:
   poetry run uvicorn src.main:app --reload {{args}}
 

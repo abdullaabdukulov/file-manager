@@ -1,4 +1,3 @@
-import uuid
 from sqlalchemy import BigInteger, Column, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -6,6 +5,7 @@ from sqlalchemy.sql.sqltypes import Enum as SQLEnum
 
 from src.database import Base
 from src.files.constants import FileType, Visibility
+from src.users.models import User  # Import User to resolve relationship
 
 
 class File(Base):
