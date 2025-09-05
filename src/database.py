@@ -4,7 +4,7 @@ from typing import Any
 
 from sqlalchemy import CursorResult, Insert, MetaData, Select, Update
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
 
 from src.config import settings
@@ -20,6 +20,8 @@ engine = create_async_engine(
     pool_recycle=settings.DATABASE_POOL_TTL,
     pool_pre_ping=settings.DATABASE_POOL_PRE_PING,
 )
+
+async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
 class Base(DeclarativeBase):

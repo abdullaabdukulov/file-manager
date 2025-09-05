@@ -5,11 +5,14 @@ import sentry_sdk
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
+from src.auth.router import router as auth_router
 from src.config import app_configs, settings
+from src.users.router import router as users_router
 
 
 @asynccontextmanager
 async def lifespan(_application: FastAPI) -> AsyncGenerator:
+    """Handle startup and shutdown events."""
     # Startup
     yield
     # Shutdown
@@ -32,7 +35,11 @@ if settings.ENVIRONMENT.is_deployed:
         environment=settings.ENVIRONMENT,
     )
 
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(users_router, prefix="/api/v1")
+
 
 @app.get("/healthcheck", include_in_schema=False)
 async def healthcheck() -> dict[str, str]:
+    """Check the health of the application."""
     return {"status": "ok"}

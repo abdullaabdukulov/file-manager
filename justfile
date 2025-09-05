@@ -1,6 +1,9 @@
 default:
   just --list
 
+seed:
+  poetry run python scripts/seed.py
+
 run *args:
   poetry run uvicorn src.main:app --reload {{args}}
 
