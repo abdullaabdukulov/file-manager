@@ -1,4 +1,5 @@
 import uuid
+
 from sqlalchemy import Boolean, Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -25,7 +26,9 @@ class User(Base):
     email = Column(String(120), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
     role = Column(SQLEnum(Role), nullable=False, default=Role.USER)
-    department_id = Column(UUID(as_uuid=True), ForeignKey("departments.id"), nullable=False)
+    department_id = Column(
+        UUID(as_uuid=True), ForeignKey("departments.id"), nullable=False
+    )
     is_active = Column(Boolean, default=True)
 
     department = relationship("Department", back_populates="users")

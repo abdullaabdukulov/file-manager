@@ -4,8 +4,13 @@ from typing import Any
 
 from sqlalchemy import CursorResult, Insert, MetaData, Select, Update
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.orm import DeclarativeBase, declared_attr, Mapped, mapped_column
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 from src.config import settings
 from src.constants import DB_NAMING_CONVENTION
@@ -39,16 +44,18 @@ class Base(DeclarativeBase):
         nullable=False,
     )
 
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        default=datetime.utcnow, nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
 
 
 async def fetch_one(
-        query: Select | Insert | Update,
-        connection: AsyncConnection | None = None,
-        commit_after: bool = False,
+    query: Select | Insert | Update,
+    connection: AsyncConnection | None = None,
+    commit_after: bool = False,
 ) -> dict[str, Any] | None:
     if not connection:
         async with engine.connect() as conn:
@@ -62,9 +69,9 @@ async def fetch_one(
 
 
 async def fetch_all(
-        query: Select | Insert | Update,
-        connection: AsyncConnection | None = None,
-        commit_after: bool = False,
+    query: Select | Insert | Update,
+    connection: AsyncConnection | None = None,
+    commit_after: bool = False,
 ) -> list[dict[str, Any]]:
     if not connection:
         async with engine.connect() as conn:
@@ -76,9 +83,9 @@ async def fetch_all(
 
 
 async def execute(
-        query: Insert | Update,
-        connection: AsyncConnection | None = None,
-        commit_after: bool = False,
+    query: Insert | Update,
+    connection: AsyncConnection | None = None,
+    commit_after: bool = False,
 ) -> None:
     if not connection:
         async with engine.connect() as conn:
@@ -89,9 +96,9 @@ async def execute(
 
 
 async def _execute_query(
-        query: Select | Insert | Update,
-        connection: AsyncConnection,
-        commit_after: bool = False,
+    query: Select | Insert | Update,
+    connection: AsyncConnection,
+    commit_after: bool = False,
 ) -> CursorResult:
     result = await connection.execute(query)
     if commit_after:

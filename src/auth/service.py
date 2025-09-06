@@ -6,6 +6,7 @@ from src.auth.utils import create_access_token, verify_password
 from src.config import settings
 from src.users.service import get_user_by_username
 
+
 async def authenticate_user(login_data: LoginRequest) -> str:
     """Authenticate a user and return a JWT access token."""
     user = await get_user_by_username(login_data.username)

@@ -1,13 +1,18 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
 from typing import Optional
 from uuid import UUID
+
+from pydantic import Field
 
 from src.files.constants import FileType, Visibility
 from src.schemas import CustomModel
 
+
 class FileUploadRequest(CustomModel):
-    visibility: Visibility = Field(..., description="Visibility level: PRIVATE, DEPARTMENT, or PUBLIC")
+    visibility: Visibility = Field(
+        ..., description="Visibility level: PRIVATE, DEPARTMENT, or PUBLIC"
+    )
+
 
 class FileResponse(CustomModel):
     id: UUID

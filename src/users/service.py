@@ -31,7 +31,9 @@ async def get_user_by_id(user_id: str) -> dict | None:
 async def create_user(user_create: UserCreate, current_user: dict) -> dict:
     """Create a new user with permission checks."""
     role = Role(current_user["role"])
-    if role == Role.MANAGER and user_create.department_id != UUID(current_user["department_id"]):
+    if role == Role.MANAGER and user_create.department_id != UUID(
+        current_user["department_id"]
+    ):
         raise NoPermissionForDepartment()
 
     existing_user = await get_user_by_username(user_create.username)
@@ -54,12 +56,14 @@ async def get_users(department_id: UUID | None, current_user: dict) -> list[dict
     """Get list of users with permission checks."""
     role = Role(current_user["role"])
     if role == Role.ADMIN:
-        query = select(User).where(User.is_active == True)
+        query = select(User).where(User.is_active)
     elif role == Role.MANAGER:
         dept_id = department_id or UUID(current_user["department_id"])
         if dept_id != UUID(current_user["department_id"]):
             raise NoPermissionForDepartment()
-        query = select(User).where(User.department_id == dept_id, User.is_active == True)
+
+        query = select(User).where(User.department_id == dept_id, User.is_active)
+
     else:
         raise NoPermissionForDepartment()
 
@@ -77,9 +81,12 @@ async def get_user(user_id: UUID, current_user: dict) -> dict:
 
     return user
 
-async def update_user_role(user_id: UUID, update_data: UserUpdateRole, current_user: dict) -> dict:
+
+async def update_user_role(
+    user_id: UUID, update_data: UserUpdateRole, current_user: dict
+) -> dict:
     """Update a user's role with permission checks."""
-    user = await get_user(user_id, current_user)
+    await get_user(user_id, current_user)
 
     if update_data.role not in Role:
         raise InvalidRole()

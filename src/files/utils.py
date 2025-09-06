@@ -1,4 +1,5 @@
 import os
+
 from src.files.constants import FileType
 from src.files.exceptions import InvalidFileType
 

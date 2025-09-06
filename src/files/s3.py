@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
+
 from aiobotocore.session import get_session
+
 from src.config import settings
 from src.files.exceptions import FileNotFound
 
@@ -9,10 +11,10 @@ async def get_s3_client():
     """Create an async S3 client for MinIO."""
     session = get_session()
     async with session.create_client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        "s3",
+        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     ) as client:
         yield client
 
