@@ -118,7 +118,11 @@ async def delete_file(file_id: UUID, current_user: dict) -> None:
     role = Role(current_user["role"])
     if role == Role.USER and file["owner_id"] != current_user["id"]:
         raise FileAccessDenied(detail="Users can only delete their own files")
-    if role == Role.MANAGER and file["department_id"] != current_user["department_id"]:
+
+    if (
+        role == Role.MANAGER
+        and str(file["department_id"]) != current_user["department_id"]
+    ):
         raise FileAccessDenied(
             detail="Managers can only delete files in their department"
         )

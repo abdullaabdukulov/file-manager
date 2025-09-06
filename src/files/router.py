@@ -1,4 +1,5 @@
 from io import BytesIO
+from urllib import parse
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Query, UploadFile
@@ -39,16 +40,21 @@ async def get_file_info(file_id: UUID, current_user: dict = Depends(get_current_
     return FileResponse(**file)
 
 
-@router.get("/{file_id}/download")
+@router.get("/{file_id}/download", response_class=StreamingResponse)
 async def download_file_endpoint(
     file_id: UUID, current_user: dict = Depends(get_current_user)
 ):
     """Download a file from S3 with access checks."""
     file_content, filename = await download_file(file_id, current_user)
+    # URL-encode the filename to handle non-ASCII characters
+    encoded_filename = parse.quote(filename)
+    headers = {
+        "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+    }
     return StreamingResponse(
         BytesIO(file_content),
         media_type="application/octet-stream",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
+        headers=headers,
     )
 
 
